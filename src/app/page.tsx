@@ -28,42 +28,68 @@ export default function Home() {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [showMobileMap, setShowMobileMap] = useState(false);
+  const [message, setMessage] = useState<string>(""); // ✅ tetap ada
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
+
+    // ✅ Guard: GPS belum siap
+    if (!coords) {
+      setMessage("Lokasi belum terdeteksi. Izinkan akses GPS lalu coba lagi.");
+      setHasSearched(true);
+      return;
+    }
+
     setLoading(true);
     setHasSearched(true);
     setSelectedPlace(null);
     setShowMobileMap(false);
+    setMessage(""); // ✅ reset pesan lama
+    setPlaces([]);
 
-    const res = await fetch("/api/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mood: query,
-        lat: coords?.lat ?? null,
-        lon: coords?.lon ?? null,
-      }),
-    });
-    const data = await res.json();
+    try {
+      // ✅ try/catch agar loading tidak stuck
+      const res = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mood: query,
+          lat: coords.lat,
+          lon: coords.lon,
+        }),
+      });
 
-    const raw = data.places ?? [];
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const validated = raw.filter(
-      (p: Place) =>
-        p &&
-        typeof p.lat === "number" &&
-        typeof p.lon === "number" &&
-        isFinite(p.lat) &&
-        isFinite(p.lon) &&
-        p.lat >= -90 &&
-        p.lat <= 90 &&
-        p.lon >= -180 &&
-        p.lon <= 180,
-    );
+      const data = await res.json();
 
-    setPlaces(validated);
-    setLoading(false);
+      // ✅ Simpan pesan dari server (error atau info kosong)
+      if (data.message || data.error) {
+        setMessage(data.message || data.error);
+      }
+
+      const raw: Place[] = data.places ?? [];
+
+      const validated = raw.filter(
+        (p) =>
+          p &&
+          typeof p.lat === "number" &&
+          typeof p.lon === "number" &&
+          isFinite(p.lat) &&
+          isFinite(p.lon) &&
+          p.lat >= -90 &&
+          p.lat <= 90 &&
+          p.lon >= -180 &&
+          p.lon <= 180,
+      );
+
+      setPlaces(validated);
+    } catch (err) {
+      console.error("Search error:", err);
+      setMessage("Gagal menghubungi server. Periksa koneksi lalu coba lagi."); // ✅ pesan error jaringan
+    } finally {
+      setLoading(false); // ✅ selalu matikan loading
+    }
   };
 
   return (
@@ -130,6 +156,7 @@ export default function Home() {
       <section className="flex flex-1 flex-col gap-6 lg:flex-row">
         {/* Cards */}
         <div className="w-full lg:w-[380px] lg:shrink-0">
+          {/* Belum pernah search */}
           {!hasSearched && !loading && (
             <div className="flex h-full min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-stone-200">
               <p className="px-4 text-center text-sm text-stone-400">
@@ -140,6 +167,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* Loading */}
           {loading && (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -148,20 +176,21 @@ export default function Home() {
             </div>
           )}
 
+          {/* Sudah search, tidak ada hasil */}
           {hasSearched && !loading && places.length === 0 && (
             <div className="flex h-full min-h-[200px] items-center justify-center rounded-2xl border-2 border-dashed border-stone-200">
               <p className="px-4 text-center text-sm text-stone-400">
-                Tidak ada tempat ditemukan.
-                <br />
-                Coba gunakan kata kunci yang berbeda.
+                {/* ✅ pakai message dari server, bukan teks hardcoded */}
+                {message || "Tidak ada tempat ditemukan. Coba kata kunci lain."}
               </p>
             </div>
           )}
 
+          {/* Ada hasil */}
           {!loading && places.length > 0 && (
             <div className="space-y-3">
               <p className="text-xs font-medium text-stone-400">
-                Menampilkan {places.length} tempat
+                {places.length} tempat ditemukan
               </p>
               <div className="space-y-3">
                 {places.map((p) => (
@@ -177,15 +206,18 @@ export default function Home() {
           )}
         </div>
 
-        {/* Map */}
+        {/* Map — desktop */}
         <div className="hidden flex-1 lg:block">
           <div className="sticky top-6 h-[calc(100vh-7rem)] overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 shadow-sm">
             {coords ? (
-              <MapView
-                places={places}
-                center={coords}
-                selectedPlace={selectedPlace}
-              />
+              // ✅ jangan render saat mobile modal terbuka
+              !showMobileMap && (
+                <MapView
+                  places={places}
+                  center={coords}
+                  selectedPlace={selectedPlace}
+                />
+              )
             ) : (
               <div className="flex h-full items-center justify-center">
                 <p className="text-sm text-stone-400">Mendapatkan lokasi…</p>
@@ -217,6 +249,7 @@ export default function Home() {
             Tutup
           </button>
           <div className="h-full w-full">
+            {/* ✅ hanya render saat modal terbuka — desktop map sudah unmount */}
             {coords && (
               <MapView
                 places={places}
