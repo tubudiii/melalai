@@ -21,34 +21,17 @@ export default function MapController({
 }) {
   const map = useMap();
   const prevId = useRef<number | null>(null);
-  const isInitial = useRef(true);
 
   useEffect(() => {
-    if (isInitial.current) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            if (isValidCoord(latitude, longitude)) {
-              map.setView([latitude, longitude], 15);
-            }
-          },
-          () => {},
-        );
-      }
-      isInitial.current = false;
-      return;
-    }
-
     if (!selectedPlace) return;
     if (!isValidCoord(selectedPlace.lat, selectedPlace.lon)) return;
+    if (prevId.current === selectedPlace.id) return;
 
-    if (prevId.current !== selectedPlace.id) {
-      prevId.current = selectedPlace.id;
-      map.flyTo([selectedPlace.lat, selectedPlace.lon], 16, {
-        duration: 1,
-      });
-    }
+    prevId.current = selectedPlace.id;
+    map.flyTo([selectedPlace.lat, selectedPlace.lon], 17, {
+      animate: true,
+      duration: 0.8,
+    });
   }, [selectedPlace, map]);
 
   return null;
