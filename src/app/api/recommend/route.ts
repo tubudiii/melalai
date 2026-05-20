@@ -4,11 +4,70 @@ import { NextRequest, NextResponse } from "next/server";
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const fallbackPlaces = [
-  { id: 1, name: "Kopi Senja", description: "Kafe nyaman dengan suasana tenang dan colokan listrik di setiap meja.", category: "cafe", address: "Jl. Raya Ubud No. 12", lat: -8.4095, lon: 115.1889, openingHours: "08:00-22:00", reason: "Cocok untuk bekerja dengan suasana tenang", estimatedBudget: "Rp 30.000 - Rp 60.000" },
-  { id: 2, name: "Warung Bu Karjo", description: "Warung makan dengan menu tradisional khas Bali yang autentik.", category: "restaurant", address: "Jl. Diponegoro No. 45", lat: -8.4110, lon: 115.1870, openingHours: "10:00-21:00", reason: "Tempat makan enak dengan harga terjangkau", estimatedBudget: "Rp 20.000 - Rp 50.000" },
-  { id: 3, name: "Taman Kota", description: "Taman kota yang asri dengan area duduk dan jalur pejalan kaki.", category: "park", address: "Jl. Ngurah Rai", lat: -8.4100, lon: 115.1900, openingHours: "06:00-18:00", reason: "Tempat santai di tengah kota", estimatedBudget: "Gratis" },
-  { id: 4, name: "Perpustakaan Daerah", description: "Perpustakaan umum dengan ruang baca yang tenang dan koleksi buku lengkap.", category: "library", address: "Jl. Pahlawan No. 1", lat: -8.4120, lon: 115.1860, openingHours: "08:00-20:00", reason: "Suasana hening cocok untuk membaca atau kerja", estimatedBudget: "Gratis" },
-  { id: 5, name: "Bioskop Grand", description: "Bioskop modern dengan layar lebar dan tempat duduk nyaman.", category: "cinema", address: "Jl. Sudirman No. 99", lat: -8.4070, lon: 115.1920, openingHours: "10:00-23:00", reason: "Hiburan malam yang menyenangkan", estimatedBudget: "Rp 40.000 - Rp 80.000" },
+  {
+    id: 1,
+    name: "Kopi Senja",
+    description:
+      "Kafe nyaman dengan suasana tenang dan colokan listrik di setiap meja.",
+    category: "cafe",
+    address: "Jl. Raya Ubud No. 12",
+    lat: -8.4095,
+    lon: 115.1889,
+    openingHours: "08:00-22:00",
+    reason: "Cocok untuk bekerja dengan suasana tenang",
+    estimatedBudget: "Rp 30.000 - Rp 60.000",
+  },
+  {
+    id: 2,
+    name: "Warung Bu Karjo",
+    description:
+      "Warung makan dengan menu tradisional khas Bali yang autentik.",
+    category: "restaurant",
+    address: "Jl. Diponegoro No. 45",
+    lat: -8.411,
+    lon: 115.187,
+    openingHours: "10:00-21:00",
+    reason: "Tempat makan enak dengan harga terjangkau",
+    estimatedBudget: "Rp 20.000 - Rp 50.000",
+  },
+  {
+    id: 3,
+    name: "Taman Kota",
+    description:
+      "Taman kota yang asri dengan area duduk dan jalur pejalan kaki.",
+    category: "park",
+    address: "Jl. Ngurah Rai",
+    lat: -8.41,
+    lon: 115.19,
+    openingHours: "06:00-18:00",
+    reason: "Tempat santai di tengah kota",
+    estimatedBudget: "Gratis",
+  },
+  {
+    id: 4,
+    name: "Perpustakaan Daerah",
+    description:
+      "Perpustakaan umum dengan ruang baca yang tenang dan koleksi buku lengkap.",
+    category: "library",
+    address: "Jl. Pahlawan No. 1",
+    lat: -8.412,
+    lon: 115.186,
+    openingHours: "08:00-20:00",
+    reason: "Suasana hening cocok untuk membaca atau kerja",
+    estimatedBudget: "Gratis",
+  },
+  {
+    id: 5,
+    name: "Bioskop Grand",
+    description: "Bioskop modern dengan layar lebar dan tempat duduk nyaman.",
+    category: "cinema",
+    address: "Jl. Sudirman No. 99",
+    lat: -8.407,
+    lon: 115.192,
+    openingHours: "10:00-23:00",
+    reason: "Hiburan malam yang menyenangkan",
+    estimatedBudget: "Rp 40.000 - Rp 80.000",
+  },
 ];
 
 function extractJSON(text: string): unknown {
@@ -92,21 +151,25 @@ Pastikan:
       throw new Error("Invalid AI response format");
     }
 
-    const places = validated.places.map((p: unknown, i: number) => {
-      const item = p as Record<string, unknown>;
-      return {
-        id: Date.now() + i,
-        name: String(item.name || "Tanpa Nama"),
-        description: String(item.description || ""),
-        category: String(item.category || "cafe"),
-        lat: Number(item.lat) || 0,
-        lon: Number(item.lon) || 0,
-        address: String(item.address || ""),
-        openingHours: String(item.openingHours || ""),
-        reason: String(item.reason || ""),
-        estimatedBudget: String(item.estimatedBudget || ""),
-      };
-    }).filter((p) => isFinite(p.lat) && isFinite(p.lon) && p.lat !== 0 && p.lon !== 0);
+    const places = validated.places
+      .map((p: unknown, i: number) => {
+        const item = p as Record<string, unknown>;
+        return {
+          id: Date.now() + i,
+          name: String(item.name || "Tanpa Nama"),
+          description: String(item.description || ""),
+          category: String(item.category || "cafe"),
+          lat: Number(item.lat) || 0,
+          lon: Number(item.lon) || 0,
+          address: String(item.address || ""),
+          openingHours: String(item.openingHours || ""),
+          reason: String(item.reason || ""),
+          estimatedBudget: String(item.estimatedBudget || ""),
+        };
+      })
+      .filter(
+        (p) => isFinite(p.lat) && isFinite(p.lon) && p.lat !== 0 && p.lon !== 0,
+      );
 
     if (places.length === 0) throw new Error("No valid places from AI");
 

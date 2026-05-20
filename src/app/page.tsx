@@ -47,7 +47,22 @@ export default function Home() {
     });
     const data = await res.json();
 
-    setPlaces(data.places ?? []);
+    const raw = data.places ?? [];
+
+    const validated = raw.filter(
+      (p: Place) =>
+        p &&
+        typeof p.lat === "number" &&
+        typeof p.lon === "number" &&
+        isFinite(p.lat) &&
+        isFinite(p.lon) &&
+        p.lat >= -90 &&
+        p.lat <= 90 &&
+        p.lon >= -180 &&
+        p.lon <= 180,
+    );
+
+    setPlaces(validated);
     setLoading(false);
   };
 

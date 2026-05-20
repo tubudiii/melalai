@@ -1,10 +1,5 @@
 "use client";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useRef } from "react";
@@ -74,9 +69,7 @@ function PlaceMarker({
             {categoryIcons[place.category] || "📍"} {place.category}
           </p>
           {place.address && (
-            <p className="mt-1 text-xs text-stone-400">
-              📍 {place.address}
-            </p>
+            <p className="mt-1 text-xs text-stone-400">📍 {place.address}</p>
           )}
           {place.openingHours && (
             <p className="mt-0.5 text-xs text-stone-400">
@@ -116,7 +109,10 @@ export default function MapView({
           isSelected={selectedPlace?.id === p.id}
         />
       ))}
-      <MapController selectedPlace={selectedPlace} />
+      <MapController
+        key={selectedPlace?.id ?? "none"}
+        selectedPlace={selectedPlace}
+      />
     </MapContainer>
   );
 }
